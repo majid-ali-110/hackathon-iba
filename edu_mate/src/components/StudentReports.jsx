@@ -5,7 +5,6 @@ import {
   LineChart, Line, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 
-// Custom colors for charts
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 const GRADE_COLORS = {
   'A': '#4CAF50',
@@ -21,10 +20,9 @@ const StudentReports = () => {
   const [classMetrics, setClassMetrics] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentReport, setStudentReport] = useState(null);
-  const [view, setView] = useState('overview'); // 'overview', 'student', 'report'
+  const [view, setView] = useState('overview'); 
 
   useEffect(() => {
-    // Load initial data
     const loadData = async () => {
       try {
         const allStudents = await studentDataService.getAllStudents();
@@ -60,7 +58,6 @@ const StudentReports = () => {
     }
   };
 
-  // Format attendance data for pie chart
   const getAttendanceData = (attendance) => {
     return [
       { name: 'Present', value: attendance },
@@ -68,7 +65,6 @@ const StudentReports = () => {
     ];
   };
 
-  // Helper to prepare subject grade data for charts
   const getSubjectGradeData = (subjects) => {
     return subjects.map(subject => ({
       name: subject.name,
@@ -81,7 +77,6 @@ const StudentReports = () => {
     }));
   };
 
-  // Component for the class overview section
   const ClassOverview = () => (
     <div className="class-metrics">
       <h2>Class Performance Overview</h2>
@@ -170,7 +165,6 @@ const StudentReports = () => {
     </div>
   );
 
-  // Component for individual student view
   const StudentView = () => {
     const subjectData = getSubjectGradeData(selectedStudent.subjects);
     
@@ -306,7 +300,6 @@ const StudentReports = () => {
     );
   };
 
-  // Component for the generated student report
   const StudentReportView = () => (
     <div className="report-view">
       <div className="report-actions">
