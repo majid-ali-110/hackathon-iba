@@ -3,8 +3,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 class ChatbotService {
   constructor() {
     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    this.isConfigured = false;
+
     if (!apiKey) {
-      console.error('Gemini API key is not set in environment variables');
+      console.error('Gemini API key is not set in environment variables. Please set VITE_GEMINI_API_KEY in your .env file.');
+      this.errorMessage = "API key not configured. Please check the application setup instructions.";
+      return;
     }
 
     try {
@@ -13,9 +17,11 @@ class ChatbotService {
       this.model = this.genAI.getGenerativeModel({ 
         model: "gemini-2.0-flash"
       });
+      this.isConfigured = true;
       console.log('Gemini model initialized successfully');
     } catch (error) {
       console.error('Error initializing Gemini:', error);
+      this.errorMessage = "Failed to initialize AI service. Please try again later.";
     }
 
     this.systemPrompts = {
@@ -68,6 +74,10 @@ class ChatbotService {
 
   async startChat(userRole) {
     return this.retry(async () => {
+      if (!this.isConfigured) {
+        throw new Error(this.errorMessage || 'API service not properly configured');
+      }
+
       try {
         console.log('Starting new chat with role:', userRole);
         const chat = this.model.startChat({
@@ -92,6 +102,13 @@ class ChatbotService {
   }
 
   async sendMessage(message, userRole, userId = 'default') {
+    if (!this.isConfigured) {
+      return { 
+        error: true,
+        message: this.errorMessage || "The AI service is not properly configured. Please check your environment settings."
+      };
+    }
+
     return this.retry(async () => {
       try {
         if (!this.genAI || !this.model) {
@@ -116,7 +133,6 @@ class ChatbotService {
           
           console.log('Received response from Gemini');
           
-          // Process content to improve formatting
           const formattedContent = this.formatResponse(content);
           
           return { message: formattedContent };
@@ -137,79 +153,54 @@ class ChatbotService {
   }
 
   formatResponse(content) {
-    // Handle empty or undefined content
     if (!content) return '';
     
-    // Remove excessive newlines but preserve paragraph breaks
     content = content.replace(/\n{3,}/g, '\n\n');
-    
-    // Make sure headers have a space after the # symbols
     content = content.replace(/^(#{1,6})([^#\s])/gm, '$1 $2');
-    
-    // Ensure lists are properly formatted with spacing
-    content = content.replace(/^(\s*[-*+])([^\s])/gm, '$1 $2'); // Add space after list markers if missing
-    content = content.replace(/^(\s*\d+\.)([^\s])/gm, '$1 $2'); // Add space after numbered list markers if missing
-    
-    // Ensure code blocks are properly formatted with syntax highlighting
+    content = content.replace(/^(\s*[-*+])([^\s])/gm, '$1 $2');
+    content = content.replace(/^(\s*\d+\.)([^\s])/gm, '$1 $2');
     content = content.replace(/```(\w+)?\n([\s\S]*?)```/g, (match, lang, code) => {
-      // Ensure proper language tag for syntax highlighting
       const language = lang ? lang.trim() : '';
       return `\`\`\`${language}\n${code.trim()}\n\`\`\``;
     });
-    
-    // Fix code blocks that might be missing newlines
     content = content.replace(/```(\w+)?([^\n])/g, '```$1\n$2');
     content = content.replace(/([^\n])```/g, '$1\n```');
-    
-    // Improve table formatting
     content = content.replace(/\n(\|[^|]+)+\|\n(\|[-|:]+)+\|\n/g, (match) => {
       return '\n' + match.trim() + '\n\n';
     });
-    
-    // Make sure inline code is properly formatted
     content = content.replace(/`([^`]+)`/g, (match, code) => {
       return '`' + code.trim() + '`';
     });
-    
-    // Ensure links are properly formatted
     content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
       return `[${text.trim()}](${url.trim()})`;
     });
-    
-    // Ensure quotes are properly formatted
-    content = content.replace(/^(>+)([^\s])/gm, '$1 $2'); // Add space after > if missing
-    
-    // Add proper spacing around headings for better readability
+    content = content.replace(/^(>+)([^\s])/gm, '$1 $2');
     content = content.replace(/^(#{1,6}\s.+)$/gm, '\n$1\n');
-    
-    // Add space after horizontal rules for better visibility
     content = content.replace(/^(---|\*\*\*|___)$/gm, '$1\n');
-    
-    // Ensure proper spacing for lists
     content = content.replace(/^(\s*[-*+]\s.+)$/gm, (match, line) => {
-      // Don't add extra newlines if it's part of a list
       if (content.split('\n').filter(l => /^\s*[-*+]\s/.test(l)).length > 1) {
         return line;
       }
       return line + '\n';
     });
-    
-    // Fix emphasis markers that might be missing spaces
     content = content.replace(/(\w)(\*\*|\*|__|_)(\w)/g, '$1 $2$3');
     content = content.replace(/(\w)(\*\*|\*|__|_)(\w)/g, '$1$2 $3');
-    
-    // Ensure images are properly formatted
     content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
       return `![${alt.trim()}](${url.trim()})`;
     });
-    
-    // Remove duplicate blank lines that might have been introduced
     content = content.replace(/\n{3,}/g, '\n\n');
     
     return content.trim();
   }
 
   async generateReport(studentId) {
+    if (!this.isConfigured) {
+      return { 
+        error: true,
+        summary: this.errorMessage || "The AI service is not properly configured. Please check your environment settings."
+      };
+    }
+
     return this.retry(async () => {
       try {
         if (!this.genAI || !this.model) {
@@ -248,6 +239,10 @@ class ChatbotService {
   }
 
   async getStudyRecommendations(studentId) {
+    if (!this.isConfigured) {
+      return [this.errorMessage || "The AI service is not properly configured. Please check your environment settings."];
+    }
+
     return this.retry(async () => {
       try {
         if (!this.genAI || !this.model) {
@@ -290,6 +285,13 @@ class ChatbotService {
   }
 
   async getStudentProgress(studentId) {
+    if (!this.isConfigured) {
+      return { 
+        error: true,
+        summary: this.errorMessage || "The AI service is not properly configured. Please check your environment settings."
+      };
+    }
+
     return this.retry(async () => {
       try {
         if (!this.genAI || !this.model) {

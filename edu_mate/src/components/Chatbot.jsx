@@ -19,7 +19,8 @@ import {
   Chip,
   Tooltip,
   Divider,
-  Stack
+  Stack,
+  Link
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import SendIcon from '@mui/icons-material/Send';
@@ -33,6 +34,7 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import WarningIcon from '@mui/icons-material/Warning';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import chatbotService from '../services/chatbotService';
@@ -237,6 +239,7 @@ const Chatbot = ({ userRole }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentStudentId, setCurrentStudentId] = useState('student123');
   const [error, setError] = useState(null);
+  const [apiConfigured, setApiConfigured] = useState(true);
   const messagesEndRef = useRef(null);
   const messageContainerRef = useRef(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -253,6 +256,32 @@ const Chatbot = ({ userRole }) => {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   };
+
+  useEffect(() => {
+    // Check if API is configured
+    setApiConfigured(chatbotService.isConfigured);
+    
+    // Add welcome message based on role and API configuration
+    let welcomeMessage;
+    
+    if (!chatbotService.isConfigured) {
+      welcomeMessage = "⚠️ API configuration issue: The AI service requires a valid API key to function properly. Please check the application setup instructions.";
+      setError("API key not properly configured");
+    } else {
+      welcomeMessage = userRole === 'student' 
+        ? "Hi! I'm your study assistant. How can I help you today?"
+        : "Welcome, teacher! I can help you track student progress and generate reports.";
+    }
+    
+    setMessages([{ type: 'bot', content: welcomeMessage, error: !chatbotService.isConfigured }]);
+    
+    // Focus input on load if API is configured
+    if (chatbotService.isConfigured) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 500);
+    }
+  }, [userRole]);
 
   useEffect(() => {
     // When messages change, update the displayed messages
@@ -274,20 +303,6 @@ const Chatbot = ({ userRole }) => {
     const slicedMessages = messages.slice(startIndex, endIndex);
     setDisplayedMessages(slicedMessages);
   }, [currentPage]);
-
-  useEffect(() => {
-    // Add welcome message based on role
-    const welcomeMessage = userRole === 'student' 
-      ? "Hi! I'm your study assistant. How can I help you today?"
-      : "Welcome, teacher! I can help you track student progress and generate reports.";
-    
-    setMessages([{ type: 'bot', content: welcomeMessage }]);
-    
-    // Focus input on load
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 500);
-  }, [userRole]);
 
   useEffect(() => {
     scrollToBottom();
@@ -321,6 +336,12 @@ const Chatbot = ({ userRole }) => {
     const messageContent = retryMessage || input;
     if (!messageContent.trim()) return;
 
+    // Check if API is configured before sending message
+    if (!chatbotService.isConfigured) {
+      setError("The AI service requires a valid API key. Please check the application setup instructions.");
+      return;
+    }
+
     const userMessage = { type: 'user', content: messageContent };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
@@ -330,7 +351,17 @@ const Chatbot = ({ userRole }) => {
 
     try {
       const response = await chatbotService.sendMessage(messageContent, userRole);
-      setMessages(prev => [...prev, { type: 'bot', content: response.message }]);
+      
+      // Handle error in the response
+      if (response.error) {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: response.message,
+          error: true
+        }]);
+      } else {
+        setMessages(prev => [...prev, { type: 'bot', content: response.message }]);
+      }
       
       // Show suggestions again after bot response
       setTimeout(() => {
@@ -359,6 +390,12 @@ const Chatbot = ({ userRole }) => {
   };
 
   const handleGenerateReport = async () => {
+    // Check if API is configured before generating report
+    if (!chatbotService.isConfigured) {
+      setError("The AI service requires a valid API key. Please check the application setup instructions.");
+      return;
+    }
+    
     handleMenuClose();
     setIsTyping(true);
     setError(null);
@@ -366,10 +403,20 @@ const Chatbot = ({ userRole }) => {
     
     try {
       const report = await chatbotService.generateReport(currentStudentId);
-      setMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: `Report generated successfully! Here's the summary:\n\n${report.summary}` 
-      }]);
+      
+      // Handle error in the response
+      if (report.error) {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: report.summary,
+          error: true
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: `Report generated successfully! Here's the summary:\n\n${report.summary}` 
+        }]);
+      }
       
       // Show suggestions again after bot response
       setTimeout(() => {
@@ -394,6 +441,12 @@ const Chatbot = ({ userRole }) => {
   };
 
   const handleGetRecommendations = async () => {
+    // Check if API is configured before getting recommendations
+    if (!chatbotService.isConfigured) {
+      setError("The AI service requires a valid API key. Please check the application setup instructions.");
+      return;
+    }
+    
     handleMenuClose();
     setIsTyping(true);
     setError(null);
@@ -401,10 +454,20 @@ const Chatbot = ({ userRole }) => {
     
     try {
       const recommendations = await chatbotService.getStudyRecommendations(currentStudentId);
-      setMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: `Here are your personalized study recommendations:\n\n${recommendations.join('\n')}` 
-      }]);
+      
+      // Check if the first recommendation is an error message (chatbotService returns an array with error message)
+      if (recommendations.length === 1 && recommendations[0].includes("not properly configured")) {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: recommendations[0],
+          error: true
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: `Here are your personalized study recommendations:\n\n${recommendations.join('\n')}` 
+        }]);
+      }
       
       // Show suggestions again after bot response
       setTimeout(() => {
@@ -429,6 +492,12 @@ const Chatbot = ({ userRole }) => {
   };
 
   const handleCheckProgress = async () => {
+    // Check if API is configured before checking progress
+    if (!chatbotService.isConfigured) {
+      setError("The AI service requires a valid API key. Please check the application setup instructions.");
+      return;
+    }
+    
     handleMenuClose();
     setIsTyping(true);
     setError(null);
@@ -436,10 +505,20 @@ const Chatbot = ({ userRole }) => {
     
     try {
       const progress = await chatbotService.getStudentProgress(currentStudentId);
-      setMessages(prev => [...prev, { 
-        type: 'bot', 
-        content: `Here's your current progress:\n\n${progress.summary}` 
-      }]);
+      
+      // Handle error in the response
+      if (progress.error) {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: progress.summary,
+          error: true
+        }]);
+      } else {
+        setMessages(prev => [...prev, { 
+          type: 'bot', 
+          content: `Here's your current progress:\n\n${progress.summary}` 
+        }]);
+      }
       
       // Show suggestions again after bot response
       setTimeout(() => {
@@ -694,6 +773,42 @@ const Chatbot = ({ userRole }) => {
     </MessageContainer>
   );
 
+  // Add API configuration warning if needed
+  const renderApiWarning = () => {
+    if (!chatbotService.isConfigured) {
+      return (
+        <Alert 
+          severity="warning" 
+          variant="filled"
+          sx={{ 
+            mb: 2, 
+            borderRadius: '12px',
+            boxShadow: '0 5px 15px rgba(0, 0, 0, 0.15)',
+          }}
+          icon={<WarningIcon />}
+        >
+          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+            API Key Not Configured
+          </Typography>
+          <Typography variant="body2">
+            This application requires a Gemini API key to function properly. Please add your API key to the .env file.
+          </Typography>
+          <Box sx={{ mt: 1 }}>
+            <Link 
+              href="https://aistudio.google.com/app/apikey" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              sx={{ color: 'white', textDecoration: 'underline', fontWeight: 'bold' }}
+            >
+              Get a Gemini API key
+            </Link>
+          </Box>
+        </Alert>
+      );
+    }
+    return null;
+  };
+
   return (
     <Zoom in={true} timeout={700}>
       <StyledPaper elevation={3}>
@@ -746,6 +861,7 @@ const Chatbot = ({ userRole }) => {
           </Menu>
         </ChatHeader>
         
+        {renderApiWarning()}
         {renderMessageContainer()}
 
         <Divider sx={{ mb: 2, opacity: 0.6 }} />
@@ -754,11 +870,11 @@ const Chatbot = ({ userRole }) => {
           <StyledTextField
             fullWidth
             variant="outlined"
-            placeholder="Type your message..."
+            placeholder={chatbotService.isConfigured ? "Type your message..." : "API key not configured..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-            disabled={isTyping}
+            disabled={isTyping || !chatbotService.isConfigured}
             inputRef={inputRef}
             InputProps={{
               sx: {
@@ -770,7 +886,7 @@ const Chatbot = ({ userRole }) => {
           <SendButton
             color="primary"
             onClick={() => handleSend()}
-            disabled={isTyping || !input.trim()}
+            disabled={isTyping || !input.trim() || !chatbotService.isConfigured}
           >
             <SendIcon />
           </SendButton>
