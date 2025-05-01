@@ -4,7 +4,7 @@ A full-stack web application built to enhance online education with AI-driven le
 
 ## 🏆 Hackathon Recognition
 
-🏅 **3rd Place Winner** – National-Level Hackathon  
+🏅 **3rd Place Winner** – Regional-Level Hackathon  
 Recognized for innovation and real-world application in the EdTech domain.
 
 ---
