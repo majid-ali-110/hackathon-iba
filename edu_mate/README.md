@@ -1,12 +1,84 @@
-# React + Vite
+# 🧠 AI-Powered E-Learning Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack web application built to enhance online education with AI-driven learning support for students and intelligent progress tracking tools for teachers.
 
-Currently, two official plugins are available:
+## 🏆 Hackathon Recognition
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+🏅 **3rd Place Winner** – National-Level Hackathon  
+Recognized for innovation and real-world application in the EdTech domain.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Features
+
+### 👩‍🎓 Student Dashboard
+
+- 🤖 AI chatbot for study sessions and quiz preparation
+- 📚 Personalized learning assistance
+- 📈 View individual learning progress
+
+### 👨‍🏫 Teacher Dashboard
+
+- 🧑‍🎓 Monitor student performance
+- 📝 Auto-generate progress reports
+- 📤 Email reports to students directly
+- 📅 Plan lecture content with AI support
+
+### ✨ Universal Features
+
+- 🔒 Role-based authentication (JWT)
+- 💬 Responsive chat interface with OpenAI GPT integration
+- 📱 Mobile-friendly UI using Tailwind CSS
+
+---
+
+## 🛠️ Tech Stack
+
+| Frontend     | Backend          | Database | Other Integrations   |
+| ------------ | ---------------- | -------- | -------------------- |
+| React.js     | Node.js, Express | MongoDB  | OpenAI API, SendGrid |
+| Tailwind CSS | JWT Auth         |          |                      |
+
+---
+
+## 🧪 Setup Instructions
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/your-username/elearning-platform.git
+   cd elearning-platform
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file in the root with:
+
+   ```env
+   OPENAI_API_KEY=your-openai-api-key
+   SENDGRID_API_KEY=your-sendgrid-api-key
+   MONGO_URI=your-mongodb-uri
+   JWT_SECRET=your-jwt-secret
+   ```
+
+4. **Start the app**
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 📷 Screenshots
+
+![alt text](image.png)
+
+---
+
+## 🤝 Contributions
+
+Pull requests and suggestions are welcome. For major changes, please open an issue first to discuss what you'd like to change.
