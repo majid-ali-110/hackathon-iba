@@ -60,10 +60,7 @@ Recognized for innovation and real-world application in the EdTech domain.
    Create a `.env` file in the root with:
 
    ```env
-   OPENAI_API_KEY=your-openai-api-key
-   SENDGRID_API_KEY=your-sendgrid-api-key
-   MONGO_URI=your-mongodb-uri
-   JWT_SECRET=your-jwt-secret
+   GEMINI_API_KEY=your-gemini-api-key
    ```
 
 4. **Start the app**
