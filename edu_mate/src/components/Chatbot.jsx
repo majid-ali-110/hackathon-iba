@@ -112,10 +112,10 @@ const MessageContainer = styled(Box)(({ theme }) => ({
   flexDirection: 'column', 
   overflowY: 'auto',
   overflowX: 'hidden',
-  height: 'calc(100% - 100px)', // Reduced from 130px to 100px to increase chat area size
-  padding: theme.spacing(2), // Increased padding from 1.5 to 2
+  height: 'calc(100% - 100px)', 
+  padding: theme.spacing(2), 
   scrollBehavior: 'smooth',
-  // Improve scrollbar styling
+
   '&::-webkit-scrollbar': {
     width: '8px',
     borderRadius: '4px',
@@ -136,7 +136,7 @@ const MessageContainer = styled(Box)(({ theme }) => ({
     border: '2px solid transparent',
     backgroundClip: 'padding-box',
   },
-  // Improve mobile scroll behavior
+
   WebkitOverflowScrolling: 'touch',
   scrollbarWidth: 'thin',
 }));
